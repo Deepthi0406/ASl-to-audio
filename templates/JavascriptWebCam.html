@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Bootstrap Example</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://api.jquery.com/jQuery.ajax/"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</head>
+
+<body onload="onLoad()">
+
+    <style>
+        #background {
+            position: fixed;
+            width: 50%;
+            height: 100%;
+            background-color: floralwhite;
+        }
+
+        #content {
+            position: fixed;
+            left: 50%;
+            width: 50%;
+            height: 100%;
+            background-color: teal;
+        }
+
+        .leftsection {
+            width: 80%;
+            height: 60%;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            margin-top: 18%;
+        }
+        #predb{
+            margin-top: 550px;
+            margin-left:200px;
+        }
+    </style>
+    <div id="background">
+        <img class="leftsection" id="cameraStream" alt="this is how you use the app">
+        <br>
+        <div id="instructions" class="leftsection">
+            <h1 style="height: 15%;"><b>American sign Language to Speech</b></h2>
+            <h2 style="height: 10%;">Instructions</h2>
+            <p>
+                <li>Click the button to open your camera again to continue translating you signs to speech.</li>
+                <li>Make sure to avoid as much as noisy background as possible by bringing your hand close to the camera.</li>
+                <li>Note: The accuracy of the predictions are not desirable.</li>
+            </p>
+            <p>Select desired language to translate to.(Default Language - 'English')</p>
+            <input type = "checkbox" id = "Tamil" value = "Tamil" class = "box">
+            <label for = "Tamil">TAMIL</label><br>
+            <input type = "checkbox" id = "Hindi" value = "Hindi" class = "box">
+            <label for = "Hindi">HINDI</label><br>
+            <input type = "checkbox" id = "Telugu" value = "Telugu" class = "box">
+            <label for = "Telugu">TELUGU</label><br>
+            <input type = "checkbox" id = "Malayalam" value = "Malayalam" class = "box">
+            <label for = "Malayalam">MALAYALAM</label>
+
+        </div>
+        <div class="text-center" id='CamButton'>
+            <button class="btn btn-primary " onclick="openCam()">Click to open camera</button>
+        </div>
+    </div>
+
+
+    <!-- right section -->
+    <div id="content" class="text-center">
+        <button class="btn btn-primary " id = "predb" onclick="openPredicit()">Predicit</button>
+        <p id="p" style="margin-top: 38%; color: whitesmoke; font-size: 50px;"></p>
+    </div>
+
+    <script>
+        $('.box').on('change', function() {
+		    $('.box').not(this).prop('checked', false);  
+		});
+        var predButton = document.getElementById("predb")
+        function onLoad() {
+            console.log("ON LOAD")
+            cam = document.getElementById("cameraStream")
+            cam.style.display = "none";
+            predButton.style.display = "none";
+            
+        }
+
+        function openCam() {
+
+            
+            var tamil = document.getElementById("Tamil");
+            var hindi = document.getElementById("Hindi");
+            var telugu = document.getElementById("Telugu");
+            var malayalam = document.getElementById("Malayalam");
+            
+            var lang_code = ""
+
+            if (tamil.checked == true){  
+                lang_code = document.getElementById("Tamil").value;  
+            }
+            else if (hindi.checked == true){  
+                lang_code = document.getElementById("Hindi").value;  
+            }
+            else if (telugu.checked == true){  
+                lang_code = document.getElementById("Telugu").value;  
+            }
+            else if (malayalam.checked == true){  
+                lang_code = document.getElementById("Malayalam").value;  
+            }
+
+            camButton = document.getElementById("CamButton");
+            camButton.style.display = 'none';
+            predButton.style.display = "block";
+
+            output = document.getElementById("p") 
+            output.style.display = "none";
+
+
+            cam = document.getElementById("cameraStream")
+            ins = document.getElementById("instructions");
+            if (ins.style.display === "none") {
+                ins.style.display = "block";
+                cam.style.display = "none";
+                output.style.display = "block";
+            } else {
+                ins.style.display = "none";
+                cam.style.display = "block";
+                output.style.display = "none";
+            }
+
+            console.log(lang_code)  
+
+            $.ajax({
+                type: "POST",
+                url : "/get_lang",
+                contentType: "application/json",
+                data: JSON.stringify({lang_code}),
+                dataType: "json",
+            });
+
+            cam.setAttribute("src", "/left_cam")
+
+        }
+
+        function openPredicit(){
+           predButton.style.display = 'none';
+           console.log("Inside Predict")
+           fetch("http://127.0.0.1:5000/output", {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+            }).then(function (response) {
+                console.log(response)
+                return response.json();
+            }).then(function (res) {
+                cam.removeAttribute("src");
+                console.log(res.output)
+                document.getElementById("p").innerHTML = res.output
+                ins.style.display = "none";
+                cam.style.display = "block";
+                camButton.style.display = 'none';
+                openPredicit()
+            });
+        }
+    </script>
+</body>
+
+</html>
